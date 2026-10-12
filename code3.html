@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Máy Tính Nhị Phân Vui Nhộn</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Nền vàng pastel nhẹ nhàng tươi vui, không bị chói mắt */
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif;
+            background-color: #fef08a; 
+            color: #1e293b;
+            margin: 0;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .workspace {
+            display: grid;
+            width: min(100%, 1440px);
+            grid-template-columns: minmax(0, 2.8fr) minmax(0, 1.2fr) minmax(0, 2fr);
+            align-items: center;
+            justify-content: center;
+            gap: clamp(12px, 1.5vw, 24px);
+            transform: translateX(calc(-1 * clamp(8px, 1.5vw, 20px)));
+        }
+
+        .left-column {
+            grid-column: 1;
+            width: 100%;
+            min-width: 0;
+        }
+
+        /* Thanh chọn phép toán */
+        .controls {
+            margin-bottom: 45px;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .bit-width-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 28px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        select {
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 20px;
+            background-color: #ff7e5f; /* Màu cam nổi bật */
+            color: #ffffff;
+            border: 4px solid #000000; /* Viền đen dày hoạt hình */
+            border-radius: 12px;
+            box-shadow: 4px 4px 0px #000000; /* Đổ bóng thô */
+            cursor: pointer;
+            outline: none;
+        }
+
+        .custom-bit-input {
+            width: 110px;
+            padding: 10px 8px;
+            border: 4px solid #000000;
+            border-radius: 12px;
+            box-shadow: 4px 4px 0 #000000;
+            color: #1e293b;
+            background: #ffffff;
+            font: inherit;
+        }
+
+        /* Khối đặt tính bo góc đổ bóng thô cá tính */
+        .calculation-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            --operator-width: clamp(58px, 8vw, 118px);
+            --operator-gap: clamp(8px, 2vw, 35px);
+            width: 100%;
+            background-color: #ffffff;
+            padding: 35px clamp(16px, 3vw, 50px);
+            border: 5px solid #000000;
+            border-radius: 20px;
+            box-shadow: 8px 8px 0px #000000;
+        }
+
+        .row-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .row-container:not(#rowB)::before {
+            content: "";
+            flex: 0 0 calc(var(--operator-width) + var(--operator-gap));
+        }
+
+        /* Tên phép toán bằng CHỮ VIẾT HOA thuần túy, không ký hiệu */
+        .operator-sign {
+            font-family: 'Courier New', Courier, monospace;
+            flex: 0 0 var(--operator-width);
+            width: var(--operator-width);
+            font-size: clamp(28px, 4vw, 54px);
+            font-weight: 900;
+            color: #3b82f6; /* Màu xanh dương rực rỡ */
+            margin-right: var(--operator-gap);
+            text-align: center;
+            user-select: none;
+            -webkit-text-stroke: 2px #000000;
+        }
+
+        .operator-sign.is-not {
+            font-size: clamp(16px, 2vw, 28px);
+        }
+
+        /* Font chữ số nhị phân siêu to rõ ràng */
+        .binary-text-input {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-columns, 4), minmax(0, 1fr));
+            gap: 4px;
+            flex: 0 1 var(--grid-width, 164px);
+            width: min(100%, var(--grid-width, 164px));
+            min-width: 0;
+            margin: 0;
+        }
+
+        /* Đường gạch ngang đặt tính */
+        .line {
+            width: 100%;
+            border-top: 6px solid #000000;
+            margin: 15px 0;
+        }
+
+        /* Dòng kết quả màu đỏ rực vui tươi nổi bật */
+        .result-row {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-columns, 4), minmax(0, 1fr));
+            gap: 4px;
+            flex: 0 1 auto;
+            width: min(var(--grid-width, 164px), calc(100% - var(--operator-width) - var(--operator-gap)));
+            min-width: 0;
+            min-height: 0;
+            transform: translateX(calc((var(--operator-width) + var(--operator-gap)) / 2));
+        }
+
+        .result-actions {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            margin-top: 28px;
+        }
+
+        .not-explanation {
+            grid-column: 2;
+            width: 100%;
+            min-width: 0;
+            margin: 0;
+            padding: 18px;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            color: #1e293b;
+            background: #ffffff;
+            box-shadow: 4px 4px 0 #000000;
+            text-align: center;
+        }
+
+        .not-explanation h2 {
+            margin: 0 0 6px;
+            font-size: 18px;
+        }
+
+        .not-explanation p {
+            margin: 0 0 10px;
+            font-size: 15px;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .not-bit-row {
+            display: grid;
+            grid-template-columns: 60px minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .not-bits {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-columns, 4), minmax(0, 1fr));
+            gap: 4px;
+            width: min(100%, var(--grid-width, 164px));
+        }
+
+        .not-bits .bit-cell {
+            border-width: 2px;
+            border-radius: 3px;
+            font-size: min(20px, calc(55vw / var(--grid-columns)));
+        }
+
+        .not-bits .bit-cell.is-one {
+            color: #ffffff;
+            background: #3b82f6;
+        }
+
+        .truth-table {
+            margin-top: 10px;
+            border-collapse: collapse;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .truth-table th,
+        .truth-table td {
+            min-width: 60px;
+            padding: 5px 10px;
+            border: 1px solid #64748b;
+        }
+
+        .truth-table th {
+            background: #dbeafe;
+        }
+
+        .team-panel {
+            grid-column: 3;
+            display: flex;
+            min-height: 560px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            border: 2px solid #1e293b;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .team-panel h2 {
+            margin: 0 0 18px;
+            color: #ff7e5f;
+            font-size: 50px;
+        }
+
+        .team-list {
+            margin: 0;
+            padding: 0 10px;
+            list-style: none;
+            width: 100%;
+        }
+
+        .team-list li {
+            padding: 8px 0;
+            border-top: 1px solid #cbd5e1;
+            font-size: 40px;
+            line-height: 1.1;
+            overflow-wrap: break-word;
+        }
+
+        .bit-cell {
+            display: grid;
+            width: 100%;
+            aspect-ratio: 1;
+            place-items: center;
+            padding: 0;
+            border: 3px solid #000000;
+            border-radius: 5px;
+            color: #000000;
+            background: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: var(--bit-font-size, 80px);
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        button.bit-cell {
+            cursor: pointer;
+        }
+
+        button.bit-cell:hover,
+        button.bit-cell:focus-visible {
+            background: #dbeafe;
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        .result-bit {
+            color: #ef4444;
+            -webkit-text-stroke: 1px #000000;
+        }
+
+        .result-bit.is-empty {
+            color: transparent;
+            background: #f8fafc;
+        }
+
+        .calculate-button {
+            white-space: nowrap;
+            padding: 10px 16px;
+            border: 4px solid #000000;
+            border-radius: 12px;
+            box-shadow: 4px 4px 0 #000000;
+            color: #ffffff;
+            background: #3b82f6;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .calculate-button:hover,
+        .calculate-button:focus-visible {
+            background: #2563eb;
+            outline: 2px solid #000000;
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 24px;
+            }
+
+            .left-column {
+                width: 100%;
+            }
+
+            .workspace {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 26px;
+                transform: none;
+            }
+
+            .left-column,
+            .not-explanation,
+            .team-panel {
+                grid-column: 1;
+            }
+
+            .team-panel {
+                min-height: 0;
+                padding: 20px;
+            }
+
+            .team-list li {
+                font-size: clamp(24px, 7vw, 36px);
+            }
+
+            .team-panel h2 {
+                font-size: clamp(32px, 10vw, 40px);
+            }
+
+            .controls {
+                flex-wrap: wrap;
+            }
+
+            .calculation-block {
+                --operator-width: clamp(42px, 12vw, 72px);
+                --operator-gap: clamp(6px, 2vw, 12px);
+            }
+
+            .operator-sign {
+                font-size: clamp(20px, 7vw, 30px);
+                -webkit-text-stroke: 1px #000000;
+            }
+
+            .bit-cell {
+                font-size: min(var(--bit-font-size, 80px), calc(55vw / var(--grid-columns)));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="workspace">
+    <section class="left-column">
+        <div class="controls">
+            <label for="op">Phép toán logic:</label>
+            <select id="op">
+                <option value="AND">AND</option>
+                <option value="OR">OR</option>
+                <option value="XOR">XOR</option>
+                <option value="NOT">NOT</option>
+            </select>
+        </div>
+
+        <div class="calculation-block">
+            <!-- Hàng nhập số A -->
+            <div class="row-container">
+                <div id="inputA" class="binary-text-input" role="group" aria-label="Các bit của số A"></div>
+            </div>
+            
+            <!-- Hàng nhập số B kèm TÊN PHÉP TOÁN BẰNG CHỮ -->
+            <div class="row-container" id="rowB">
+                <span id="displayOp" class="operator-sign">AND</span>
+                <div id="inputB" class="binary-text-input" role="group" aria-label="Các bit của số B"></div>
+            </div>
+            
+            <div class="line"></div>
+            
+            <!-- Hàng kết quả nhảy tự động -->
+            <div id="result" class="result-row" role="group" aria-label="Kết quả" aria-live="polite"></div>
+        </div>
+
+        <div class="result-actions">
+            <button class="calculate-button" id="calculateButton" type="button">Tính kết quả</button>
+        </div>
+
+        <div class="bit-width-control">
+            <label for="bitWidth">Độ rộng bit:</label>
+            <select id="bitWidth">
+                <option value="4" selected>4 bit</option>
+                <option value="8">8 bit</option>
+                <option value="16">16 bit</option>
+                <option value="custom">Tùy chọn</option>
+            </select>
+            <input class="custom-bit-input" id="customBitWidth" type="number" min="1" max="256" step="1" value="4" aria-label="Nhập số bit tùy chọn từ 1 đến 256" title="Nhập từ 1 đến 256 bit" hidden>
+        </div>
+    </section>
+
+    <section class="not-explanation" id="notExplanation" aria-labelledby="notHeading" hidden>
+        <h2 id="notHeading">NOT: đảo từng bit</h2>
+        <p>Bit 0 đổi thành 1, bit 1 đổi thành 0. Sau đó áp dụng công thức <strong>A AND NOT B</strong>.</p>
+        <div class="not-bit-row">
+            <span>B</span>
+            <div class="not-bits" id="notSourceBits" role="group" aria-label="Số B trước khi đảo"></div>
+        </div>
+        <div class="not-bit-row">
+            <span>NOT B</span>
+            <div class="not-bits" id="notComplementBits" role="group" aria-label="Số B sau khi đảo từng bit"></div>
+        </div>
+        <table class="truth-table" aria-label="Bảng chân trị của NOT">
+            <thead><tr><th>B</th><th>NOT B</th></tr></thead>
+            <tbody><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>0</td></tr></tbody>
+        </table>
+    </section>
+
+    <aside class="team-panel" aria-labelledby="teamHeading">
+        <h2 id="teamHeading">THÀNH VIÊN</h2>
+        <ul class="team-list">
+            <li>Hoàng Thu Ngân</li>
+            <li>Nguyễn Hải Yến</li>
+            <li>Nguyễn Hà Linh</li>
+            <li>Lưu Thị Ngọc Huyền</li>
+            <li>Lưu Thành Công</li>
+            <li>Bùi Minh Tuấn</li>
+        </ul>
+    </aside>
+    </main>
+
+    <script>
+        const inputA = document.getElementById('inputA');
+        const inputB = document.getElementById('inputB');
+        const result = document.getElementById('result');
+        const operatorSelect = document.getElementById('op');
+        const bitWidthSelect = document.getElementById('bitWidth');
+        const customBitWidthInput = document.getElementById('customBitWidth');
+        const calculationBlock = document.querySelector('.calculation-block');
+        const notExplanation = document.getElementById('notExplanation');
+        const notSourceBits = document.getElementById('notSourceBits');
+        const notComplementBits = document.getElementById('notComplementBits');
+        let bitWidth = 4;
+        let valueA = 13n;
+        let valueB = 11n;
+
+        function configureGrid(grid) {
+            const gap = 4;
+            const gridColumns = Math.min(bitWidth, 16);
+            const cellSize = bitWidth <= 4 ? 92 : bitWidth <= 8 ? 58 : 36;
+            const fontSize = bitWidth <= 4 ? 80 : bitWidth <= 8 ? 44 : bitWidth <= 16 ? 26 : 22;
+            grid.style.setProperty('--bit-count', bitWidth);
+            grid.style.setProperty('--grid-columns', gridColumns);
+            grid.style.setProperty('--bit-font-size', `${fontSize}px`);
+            grid.style.setProperty('--grid-width', `${gridColumns * cellSize + (gridColumns - 1) * gap}px`);
+        }
+
+        function renderOperand(grid, value, operandName) {
+            configureGrid(grid);
+            grid.replaceChildren();
+
+            for (let position = bitWidth - 1; position >= 0; position--) {
+                const mask = 1n << BigInt(position);
+                const isOne = (value & mask) !== 0n;
+                const bit = document.createElement('button');
+                bit.type = 'button';
+                bit.className = 'bit-cell';
+                bit.textContent = isOne ? '1' : '0';
+                bit.dataset.operand = operandName;
+                bit.dataset.position = position;
+                bit.setAttribute('aria-pressed', String(isOne));
+                bit.setAttribute('aria-label', `Số ${operandName}, bit ${position + 1}: ${isOne ? 1 : 0}`);
+                grid.append(bit);
+            }
+        }
+
+        function renderEmptyResult() {
+            configureGrid(result);
+            result.replaceChildren();
+
+            for (let position = bitWidth - 1; position >= 0; position--) {
+                const bit = document.createElement('span');
+                bit.className = 'bit-cell result-bit is-empty';
+                bit.setAttribute('aria-label', `Bit ${position + 1}, chưa tính`);
+                result.append(bit);
+            }
+        }
+
+        function clearResult() {
+            renderEmptyResult();
+        }
+
+        function renderReadonlyBits(grid, value) {
+            configureGrid(grid);
+            grid.replaceChildren();
+
+            for (let position = bitWidth - 1; position >= 0; position--) {
+                const isOne = (value & (1n << BigInt(position))) !== 0n;
+                const bit = document.createElement('span');
+                bit.className = `bit-cell${isOne ? ' is-one' : ''}`;
+                bit.textContent = isOne ? '1' : '0';
+                grid.append(bit);
+            }
+        }
+
+        function updateNotExplanation() {
+            const isNot = operatorSelect.value === 'NOT';
+            notExplanation.hidden = !isNot;
+            if (!isNot) return;
+
+            const mask = (1n << BigInt(bitWidth)) - 1n;
+            renderReadonlyBits(notSourceBits, valueB);
+            renderReadonlyBits(notComplementBits, (~valueB) & mask);
+        }
+
+        function updateOperator() {
+            const operator = operatorSelect.value;
+            const isNot = operator === 'NOT';
+            const displayOperator = document.getElementById('displayOp');
+            displayOperator.textContent = isNot ? 'AND NOT' : operator;
+            displayOperator.classList.toggle('is-not', isNot);
+            updateNotExplanation();
+            clearResult();
+        }
+
+        function renderOperands() {
+            renderOperand(inputA, valueA, 'A');
+            renderOperand(inputB, valueB, 'B');
+        }
+
+        calculationBlock.addEventListener('click', (event) => {
+            const bit = event.target.closest('.bit-cell[data-operand]');
+            if (!bit) return;
+
+            const position = Number(bit.dataset.position);
+            const mask = 1n << BigInt(position);
+            const operandName = bit.dataset.operand;
+
+            if (operandName === 'A') valueA ^= mask;
+            else valueB ^= mask;
+
+            const value = operandName === 'A' ? valueA : valueB;
+            const isOne = (value & mask) !== 0n;
+            bit.textContent = isOne ? '1' : '0';
+            bit.setAttribute('aria-pressed', String(isOne));
+            bit.setAttribute('aria-label', `Số ${operandName}, bit ${position + 1}: ${isOne ? 1 : 0}`);
+            updateNotExplanation();
+            clearResult();
+        });
+
+        operatorSelect.addEventListener('change', updateOperator);
+
+        function updateBitWidth(nextWidth) {
+            bitWidth = nextWidth;
+            const mask = (1n << BigInt(bitWidth)) - 1n;
+            valueA &= mask;
+            valueB &= mask;
+            renderOperands();
+            updateOperator();
+        }
+
+        bitWidthSelect.addEventListener('change', () => {
+            if (bitWidthSelect.value === 'custom') {
+                customBitWidthInput.hidden = false;
+                customBitWidthInput.value = String(bitWidth);
+                customBitWidthInput.focus();
+                return;
+            }
+
+            customBitWidthInput.hidden = true;
+            updateBitWidth(Number(bitWidthSelect.value));
+        });
+
+        customBitWidthInput.addEventListener('change', () => {
+            const customWidth = Number(customBitWidthInput.value);
+            if (!Number.isInteger(customWidth) || customWidth < 1 || customWidth > 256) {
+                customBitWidthInput.setCustomValidity('Nhập số bit nguyên từ 1 đến 256.');
+                customBitWidthInput.reportValidity();
+                return;
+            }
+
+            customBitWidthInput.setCustomValidity('');
+            updateBitWidth(customWidth);
+        });
+
+        document.getElementById('calculateButton').addEventListener('click', () => {
+            const mask = (1n << BigInt(bitWidth)) - 1n;
+            let resultValue;
+
+            switch (operatorSelect.value) {
+                case 'AND':
+                    resultValue = valueA & valueB;
+                    break;
+                case 'OR':
+                    resultValue = valueA | valueB;
+                    break;
+                case 'XOR':
+                    resultValue = valueA ^ valueB;
+                    break;
+                case 'NOT':
+                    resultValue = valueA & (~valueB) & mask;
+                    break;
+            }
+
+            configureGrid(result);
+            result.replaceChildren();
+            for (let position = bitWidth - 1; position >= 0; position--) {
+                const isOne = (resultValue & (1n << BigInt(position))) !== 0n;
+                const bit = document.createElement('span');
+                bit.className = 'bit-cell result-bit';
+                bit.textContent = isOne ? '1' : '0';
+                bit.setAttribute('aria-label', `Bit ${position + 1}: ${isOne ? 1 : 0}`);
+                result.append(bit);
+            }
+        });
+
+        renderOperands();
+        updateOperator();
+    </script>
+</body>
+</html>
